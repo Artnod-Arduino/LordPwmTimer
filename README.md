@@ -1,4 +1,5 @@
-# DailyTimer
+# A METTRE A JOUR
+# DailyTimer 
 Minuterie journalière avec chevauchement sur 2 jours. Active ou désactive une broche selon l'heure.
 
 ## Constantes
