@@ -1,0 +1,30 @@
+#######################################
+# Syntax Coloring Map For LordPwmTimer
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+LordPwmTimer	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+getValue	KEYWORD2
+setValue	KEYWORD2
+setLord	KEYWORD2
+run	KEYWORD2
+isWorking	KEYWORD2
+getPwm	KEYWORD2
+enable	KEYWORD2
+isEnable	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+LORDTIMER_ON	LITERAL1
+LORDTIMER_OFF	LITERAL1
+LORDTIMER_PWM_TIME	LITERAL1
