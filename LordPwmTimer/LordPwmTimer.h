@@ -46,7 +46,7 @@ class LordPwmTimer
 		unsigned long _PwmStartTime;
 		
 		bool	runCycle(int now);
-		void	incrementPwm(unsigned long unixTime);
-		void	decrementPwm(unsigned long unixTime);
+		void	incrementPwm(unsigned long timeSec);
+		void	decrementPwm(unsigned long timeSec);
 };
 #endif

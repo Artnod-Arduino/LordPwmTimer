@@ -53,8 +53,9 @@ void LordPwmTimer::run(DateTime now)
 		bool new_state = runCycle((now.hour()*60)+now.minute());	
 		if(new_state != _isWorking)
 		{
-			if(new_state) incrementPwm(now.unixtime());
-			else decrementPwm(now.unixtime());
+			unsigned long timeSec = (now.hour()*3600) + (now.minute()*60) + now.second();
+			if(new_state) incrementPwm(timeSec);
+			else decrementPwm(timeSec);
 		}
 	}
 }
@@ -118,20 +119,19 @@ bool LordPwmTimer::runCycle(int now)
 	return working;
 }
 
-void LordPwmTimer::incrementPwm(unsigned long unixTime)
+void LordPwmTimer::incrementPwm(unsigned long timeSec)
 {
 	float nbPerSec = 255.0 / _data[LORDTIMER_PWM_TIME];
-	if(_isStarted == false)
+	unsigned long startOn = _data[LORDTIMER_ON] *60;
+	unsigned long endOn = startOn + _data[LORDTIMER_PWM_TIME];
+	
+	if(timeSec >= startOn && timeSec <= endOn)
 	{
-		_PwmStartTime = unixTime;
-		_isStarted = true;
-	}
-	else
-	{
-		float pmwVal = nbPerSec * (unixTime - _PwmStartTime);
+		if(_isStarted == false) _isStarted = true;
+		float pmwVal = nbPerSec * (timeSec - startOn);
 		if(pmwVal <= 255)
 		{
-			_pwm = pmwVal;			
+			_pwm = pmwVal;
 			analogWrite(_IO_Pin, _pwm);
 		}
 		else
@@ -140,28 +140,39 @@ void LordPwmTimer::incrementPwm(unsigned long unixTime)
 			_isStarted = false;
 		}
 	}
+	else 
+	{
+		_pwm = 255;
+		analogWrite(_IO_Pin, _pwm);
+		_isWorking = true;
+	}
 }
 
-void LordPwmTimer::decrementPwm(unsigned long unixTime)
+void LordPwmTimer::decrementPwm(unsigned long timeSec)
 {
 	float nbPerSec = 255.0 / _data[LORDTIMER_PWM_TIME];
-	if(_isStarted == false)
+	unsigned long endOff = _data[LORDTIMER_OFF] *60;
+	unsigned long startOff = endOff - _data[LORDTIMER_PWM_TIME];
+	
+	if(timeSec >= startOff && timeSec <= endOff)
 	{
-		_PwmStartTime = unixTime;
-		_isStarted = true;
-	}
-	else
-	{
-		float pmwVal = nbPerSec * (unixTime - _PwmStartTime);
+		if(_isStarted == false) _isStarted = true;
+		float pmwVal = 255.0 - (nbPerSec * (timeSec - startOff));
 		if(pmwVal >= 0)
 		{
 			_pwm = pmwVal;
-			digitalWrite(_IO_Pin, _pwm);
+			analogWrite(_IO_Pin, _pwm);
 		}
 		else
 		{
-			_isWorking = true;
+			_isWorking = false;
 			_isStarted = false;
 		}
+	}
+	else 
+	{
+		_pwm = 0;
+		analogWrite(_IO_Pin, _pwm);
+		_isWorking = false;
 	}
 }
