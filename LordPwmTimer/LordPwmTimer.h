@@ -43,7 +43,6 @@ class LordPwmTimer
 		int		_pwm;
 		bool	_isEnable;
 		int		_lastDay;
-		unsigned long _PwmStartTime;
 		
 		bool	runCycle(int now);
 		void	incrementPwm(unsigned long timeSec);
