@@ -7,6 +7,8 @@
 #define LORDTIMER_ON		0
 #define LORDTIMER_OFF		1
 #define LORDTIMER_PWM_TIME	2
+#define LORDTIMER_PWM_MIN	3
+#define LORDTIMER_PWM_MAX	4
 
 class LordPwmTimer
 {
@@ -37,14 +39,15 @@ class LordPwmTimer
 	private:
 		int		_IO_Pin;
 		TimeLord _myLord;
-		int		_data[3];
+		int		_data[5];
 		bool	_isWorking;
 		bool	_isStarted;
 		int		_pwm;
 		bool	_isEnable;
 		int		_lastDay;
 		
-		bool	runCycle(int now);
+		void	checkSun(DateTime now);
+		bool	runCycle(int timeMin);
 		void	incrementPwm(unsigned long timeSec);
 		void	decrementPwm(unsigned long timeSec);
 };

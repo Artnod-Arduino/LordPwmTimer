@@ -15,6 +15,8 @@ LordPwmTimer::LordPwmTimer(int IO_Pin)
 	_lastDay	= 0;
 	pinMode(_IO_Pin,OUTPUT);
 	analogWrite(_IO_Pin, 0);
+	_data[LORDTIMER_PWM_MIN] = 0;
+	_data[LORDTIMER_PWM_MAX] = 255;
 }
 
 
@@ -40,17 +42,10 @@ void LordPwmTimer::run(DateTime now)
 	if(_isEnable)
 	{
 		// check for new Sun Rise/Set
-		if(now.day() != _lastDay)
-		{
-			byte sunTime[] = {0, 0, 0, now.day(), now.month(), now.year()};
-			_myLord.SunRise(sunTime);
-			_data[LORDTIMER_ON] = sunTime[2] * 60 + sunTime[1];
-			_myLord.SunSet(sunTime);
-			_data[LORDTIMER_OFF] = sunTime[2] * 60 + sunTime[1];
-			_lastDay = now.day();
-		}
+		checkSun(now);
 		// change pwm
-		bool new_state = runCycle((now.hour()*60)+now.minute());	
+		int timeMin = (now.hour()*60) + now.minute();
+		bool new_state = runCycle(timeMin);
 		if(new_state != _isWorking)
 		{
 			unsigned long timeSec = (now.hour()*3600) + (now.minute()*60) + now.second();
@@ -62,7 +57,7 @@ void LordPwmTimer::run(DateTime now)
 
 bool LordPwmTimer::isWorking(void)
 {
-	return (_isWorking || _isStarted);
+	return _isWorking;
 }
 
 int LordPwmTimer::getPwm(void)
@@ -90,46 +85,37 @@ bool LordPwmTimer::isEnable(void)
 	return _isEnable;
 }
 
-
-bool LordPwmTimer::runCycle(int now)
+void LordPwmTimer::checkSun(DateTime now)
 {
-	bool working = false;
-	if(_data[LORDTIMER_ON] < _data[LORDTIMER_OFF] ) // operation le jour meme
+	if(now.day() != _lastDay)
 	{
-		if((now >= _data[LORDTIMER_ON]) && (now < _data[LORDTIMER_OFF])) // jour
-		{
-			working = true;
-		}
-		else // nuit
-		{
-			working = false;
-		}
-	}  
-	else if(_data[LORDTIMER_ON] > _data[LORDTIMER_OFF])  // opération chevauche 2 jours 
-	{
-		if((now < _data[LORDTIMER_ON]) && (now >= _data[LORDTIMER_OFF])) // nuit
-		{
-			working = false;
-		}
-		else // jour
-		{
-			working = true;
-		}
+		byte sunTime[] = {0, 0, 0, now.day(), now.month(), now.year()};
+		_myLord.SunRise(sunTime);
+		_data[LORDTIMER_ON] = sunTime[2] * 60 + sunTime[1];
+		_myLord.SunSet(sunTime);
+		_data[LORDTIMER_OFF] = sunTime[2] * 60 + sunTime[1];
+		_lastDay = now.day();
 	}
-	return working;
+}
+
+bool LordPwmTimer::runCycle(int timeMin)
+{
+	if((timeMin >= _data[LORDTIMER_ON]) && (timeMin < _data[LORDTIMER_OFF])) return true;
+	return false;
 }
 
 void LordPwmTimer::incrementPwm(unsigned long timeSec)
 {
-	float nbPerSec = 255.0 / _data[LORDTIMER_PWM_TIME];
+	int pwmRange = _data[LORDTIMER_PWM_MAX] - _data[LORDTIMER_PWM_MIN];
+	float nbPerSec = pwmRange / _data[LORDTIMER_PWM_TIME];
 	unsigned long startOn = _data[LORDTIMER_ON] *60;
 	unsigned long endOn = startOn + _data[LORDTIMER_PWM_TIME];
 	
 	if(timeSec >= startOn && timeSec <= endOn)
 	{
 		if(_isStarted == false) _isStarted = true;
-		float pmwVal = nbPerSec * (timeSec - startOn);
-		if(pmwVal <= 255)
+		float pmwVal = _data[LORDTIMER_PWM_MIN] + (nbPerSec * (timeSec - startOn));
+		if(pmwVal <= _data[LORDTIMER_PWM_MAX])
 		{
 			_pwm = pmwVal;
 			analogWrite(_IO_Pin, _pwm);
@@ -142,7 +128,7 @@ void LordPwmTimer::incrementPwm(unsigned long timeSec)
 	}
 	else 
 	{
-		_pwm = 255;
+		_pwm = _data[LORDTIMER_PWM_MAX];
 		analogWrite(_IO_Pin, _pwm);
 		_isWorking = true;
 	}
@@ -150,15 +136,16 @@ void LordPwmTimer::incrementPwm(unsigned long timeSec)
 
 void LordPwmTimer::decrementPwm(unsigned long timeSec)
 {
-	float nbPerSec = 255.0 / _data[LORDTIMER_PWM_TIME];
+	int pwmRange = _data[LORDTIMER_PWM_MAX] - _data[LORDTIMER_PWM_MIN];
+	float nbPerSec = pwmRange / _data[LORDTIMER_PWM_TIME];
 	unsigned long endOff = _data[LORDTIMER_OFF] *60;
 	unsigned long startOff = endOff - _data[LORDTIMER_PWM_TIME];
 	
 	if(timeSec >= startOff && timeSec <= endOff)
 	{
 		if(_isStarted == false) _isStarted = true;
-		float pmwVal = 255.0 - (nbPerSec * (timeSec - startOff));
-		if(pmwVal >= 0)
+		float pmwVal = _data[LORDTIMER_PWM_MAX] - (nbPerSec * (timeSec - startOff));
+		if(pmwVal >= _data[LORDTIMER_PWM_MIN])
 		{
 			_pwm = pmwVal;
 			analogWrite(_IO_Pin, _pwm);
@@ -171,7 +158,7 @@ void LordPwmTimer::decrementPwm(unsigned long timeSec)
 	}
 	else 
 	{
-		_pwm = 0;
+		_pwm = _data[LORDTIMER_PWM_MIN];
 		analogWrite(_IO_Pin, _pwm);
 		_isWorking = false;
 	}
