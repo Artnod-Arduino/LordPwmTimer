@@ -57,7 +57,7 @@ void LordPwmTimer::run(DateTime now)
 
 bool LordPwmTimer::isWorking(void)
 {
-	return _isWorking;
+	return (_isWorking || _isStarted);
 }
 
 int LordPwmTimer::getPwm(void)
