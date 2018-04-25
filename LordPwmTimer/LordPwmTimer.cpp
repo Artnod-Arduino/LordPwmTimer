@@ -8,15 +8,13 @@
 LordPwmTimer::LordPwmTimer(int IO_Pin)
 {
 	_IO_Pin		= IO_Pin;
-	_isWorking	= false;
-	_isStarted	= false;
 	_isEnable	= false;
-	_pwm		= 0;
-	_lastDay	= 0;
-	pinMode(_IO_Pin,OUTPUT);
-	analogWrite(_IO_Pin, 0);
 	_data[LORDTIMER_PWM_MIN] = 0;
 	_data[LORDTIMER_PWM_MAX] = 255;
+	_pwm		= _data[LORDTIMER_PWM_MIN];
+	_lastDay	= 0;
+	pinMode(_IO_Pin,OUTPUT);
+	analogWrite(_IO_Pin, _pwm);
 }
 
 
@@ -41,25 +39,11 @@ void LordPwmTimer::run(DateTime now)
 {
 	if(_isEnable)
 	{
-		// check for new Sun Rise/Set
-		checkSun(now);
-		// change pwm
-		int timeMin = (now.hour()*60) + now.minute();
-		bool new_state = runCycle(timeMin);
-		if(new_state != _isWorking)
-		{
-			unsigned long timeSec = (now.hour()*3600) + (now.minute()*60) + now.second();
-			if(new_state) incrementPwm(timeSec);
-			else decrementPwm(timeSec);
-		}
+		checkSun(now); // check for new Sun Rise/Set
+		unsigned long timeSec = (unsigned long)(now.hour()) * 3600 + (now.minute()*60) + now.second(); // time in sec from 00h00:00
+		runPwm(timeSec); // change pwm
 	}
 }
-
-bool LordPwmTimer::isWorking(void)
-{
-	return (_isWorking || _isStarted);
-}
-
 int LordPwmTimer::getPwm(void)
 {
 	return _pwm;
@@ -70,12 +54,8 @@ void LordPwmTimer::enable(bool value)
 {
 	if(value != _isEnable)
 	{
-		if(_isWorking)
-		{
-			_isWorking = false;
-			_pwm = 0;
-			digitalWrite(_IO_Pin, _pwm);
-		}
+		if(value == false) _pwm = 0;
+		digitalWrite(_IO_Pin, _pwm);
 		_isEnable = value;
 	}
 }
@@ -84,6 +64,7 @@ bool LordPwmTimer::isEnable(void)
 {
 	return _isEnable;
 }
+
 
 void LordPwmTimer::checkSun(DateTime now)
 {
@@ -98,68 +79,55 @@ void LordPwmTimer::checkSun(DateTime now)
 	}
 }
 
-bool LordPwmTimer::runCycle(int timeMin)
-{
-	if((timeMin >= _data[LORDTIMER_ON]) && (timeMin < _data[LORDTIMER_OFF])) return true;
-	return false;
-}
-
-void LordPwmTimer::incrementPwm(unsigned long timeSec)
+void LordPwmTimer::runPwm(unsigned long timeSec)
 {
 	int pwmRange = _data[LORDTIMER_PWM_MAX] - _data[LORDTIMER_PWM_MIN];
-	float nbPerSec = pwmRange / _data[LORDTIMER_PWM_TIME];
-	unsigned long startOn = _data[LORDTIMER_ON] *60;
-	unsigned long endOn = startOn + _data[LORDTIMER_PWM_TIME];
+	float nbPerSec = (float)(pwmRange) / _data[LORDTIMER_PWM_TIME];
+	unsigned long startOn = (unsigned long)(_data[LORDTIMER_ON]) *60;
+	unsigned long endOn = ((unsigned long)(_data[LORDTIMER_ON]) *60) + _data[LORDTIMER_PWM_TIME];
+	unsigned long startOff = ((unsigned long)(_data[LORDTIMER_OFF]) *60) - _data[LORDTIMER_PWM_TIME];
+	unsigned long endOff = (unsigned long)(_data[LORDTIMER_OFF]) *60;
 	
-	if(timeSec >= startOn && timeSec <= endOn)
+	if(timeSec < startOn) // off = _data[LORDTIMER_PWM_MIN]
 	{
-		if(_isStarted == false) _isStarted = true;
-		float pmwVal = _data[LORDTIMER_PWM_MIN] + (nbPerSec * (timeSec - startOn));
-		if(pmwVal <= _data[LORDTIMER_PWM_MAX])
+		if(_pwm != _data[LORDTIMER_PWM_MIN])
 		{
-			_pwm = pmwVal;
+			_pwm = _data[LORDTIMER_PWM_MIN];
 			analogWrite(_IO_Pin, _pwm);
 		}
-		else
-		{
-			_isWorking = true;
-			_isStarted = false;
-		}
 	}
-	else 
+	else if((timeSec >= startOn)  && (timeSec < endOn)) // switch on = pwm increment
 	{
-		_pwm = _data[LORDTIMER_PWM_MAX];
-		analogWrite(_IO_Pin, _pwm);
-		_isWorking = true;
-	}
-}
-
-void LordPwmTimer::decrementPwm(unsigned long timeSec)
-{
-	int pwmRange = _data[LORDTIMER_PWM_MAX] - _data[LORDTIMER_PWM_MIN];
-	float nbPerSec = pwmRange / _data[LORDTIMER_PWM_TIME];
-	unsigned long endOff = _data[LORDTIMER_OFF] *60;
-	unsigned long startOff = endOff - _data[LORDTIMER_PWM_TIME];
-	
-	if(timeSec >= startOff && timeSec <= endOff)
-	{
-		if(_isStarted == false) _isStarted = true;
-		float pmwVal = _data[LORDTIMER_PWM_MAX] - (nbPerSec * (timeSec - startOff));
-		if(pmwVal >= _data[LORDTIMER_PWM_MIN])
+		float pwmVal = _data[LORDTIMER_PWM_MIN] + (nbPerSec * (timeSec - startOn));
+		if((int)(pwmVal) != _pwm)
 		{
-			_pwm = pmwVal;
+			_pwm = pwmVal;
 			analogWrite(_IO_Pin, _pwm);
 		}
-		else
+	}
+	else if((timeSec >= endOn)    && (timeSec < startOff)) // on = _data[LORDTIMER_PWM_MAX]
+	{
+		if(_pwm != _data[LORDTIMER_PWM_MAX])
 		{
-			_isWorking = false;
-			_isStarted = false;
+			_pwm = _data[LORDTIMER_PWM_MAX];
+			analogWrite(_IO_Pin, _pwm);
 		}
 	}
-	else 
+	else if((timeSec >= startOff) && (timeSec < endOff)) // switch off = pwm decrement
 	{
-		_pwm = _data[LORDTIMER_PWM_MIN];
-		analogWrite(_IO_Pin, _pwm);
-		_isWorking = false;
+		float pwmVal = _data[LORDTIMER_PWM_MAX] - (nbPerSec * (timeSec - startOff));
+		if((int)(pwmVal) != _pwm)
+		{
+			_pwm = pwmVal;
+			analogWrite(_IO_Pin, _pwm);
+		}
+	}
+	else if(timeSec > endOff) // off = _data[LORDTIMER_PWM_MIN]
+	{
+		if(_pwm != _data[LORDTIMER_PWM_MIN])
+		{
+			_pwm = _data[LORDTIMER_PWM_MIN];
+			analogWrite(_IO_Pin, _pwm);
+		}
 	}
 }

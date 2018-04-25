@@ -22,11 +22,9 @@ class LordPwmTimer
 		void	setValue(int type, int value);
 		// permet de configurer le TimeLord
 		void	setLord(int timeZone, float latitude, float logitude);
+		
 		// lance l'analyse
-		// currentTime = nombre de minute depuis minuit (22:30 -> 22*60 + 30 = 1350)
 		void	run(DateTime now);
-		// renvoie un booléen signifiant sont état
-		bool	isWorking(void);
 		// renvoie un int signifiant le pwm
 		int		getPwm(void);
 		
@@ -40,15 +38,11 @@ class LordPwmTimer
 		int		_IO_Pin;
 		TimeLord _myLord;
 		int		_data[5];
-		bool	_isWorking;
-		bool	_isStarted;
 		int		_pwm;
 		bool	_isEnable;
 		int		_lastDay;
 		
 		void	checkSun(DateTime now);
-		bool	runCycle(int timeMin);
-		void	incrementPwm(unsigned long timeSec);
-		void	decrementPwm(unsigned long timeSec);
+		void	runPwm(unsigned long timeSec);
 };
 #endif
