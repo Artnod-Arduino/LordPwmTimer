@@ -33,7 +33,7 @@ IO_Pin		  | int  | Oui	  | Numéro de la broche utilisé.
 -------------
 
 ### getValue(type)
-Renvoie le paramètre souhaité sous la fourme d'un entier, représentant un nombre de minute depuis minuit.
+Renvoie le paramètre souhaité sous la fourme d'un entier.
 
 Paramètres | Type | Requis | Description
 ---------- | ---- | ------ | -----------
@@ -54,7 +54,7 @@ value	   | int  | Oui	   | Nombre entier.
 -------------
 
 ### setLord(timeZone, latitude, longitude)
-Permet de configurer un paramètre.
+Permet de configurer TimeLord.
 
 Paramètres | Type | Requis | Description
 ---------- | ---- | ------ | -----------
