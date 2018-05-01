@@ -21,7 +21,7 @@ class LordPwmTimer
 		// permet de modifier les valeurs par catégorie de parametrage
 		void	setValue(int type, int value);
 		// permet de configurer le TimeLord
-		void	setLord(int timeZone, float latitude, float logitude);
+		void	setLord(int timeZone, float latitude, float longitude);
 		
 		// lance l'analyse
 		void	run(DateTime now);
