@@ -1,6 +1,7 @@
-# A METTRE A JOUR
-# DailyTimer 
-Minuterie journalière avec chevauchement sur 2 jours. Active ou désactive une broche selon l'heure.
+
+# LordPwmTimer 
+Minuterie journalière se basant sur les heures de lever/coucher de soleil avec un PWM réglable.  
+LordPwmTimer utilise la library **TimeLord** disponible ici: [github.com/probonopd/TimeLord](https://github.com/probonopd/TimeLord)
 
 ## Constantes
  * `LORDTIMER_PWM_TIME` = 0
@@ -47,7 +48,7 @@ Permet de configurer un paramètre.
 Paramètres | Type | Requis | Description
 ---------- | ---- | ------ | -----------
 type	   | int  | Oui	   | Utiliser les constantes.
-value	   | int  | Oui	   | Nombre de minute depuis minuit. Exemple pour *10:27* `minute = (10*60) + 27`.
+value	   | int  | Oui	   | Nombre entier.
 
 
 -------------
