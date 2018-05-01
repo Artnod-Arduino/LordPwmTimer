@@ -1,6 +1,6 @@
 
 # LordPwmTimer 
-Minuterie journalière se basant sur les heures de lever/coucher de soleil avec un PWM réglable.  
+Minuterie journalière se basant sur les heures de lever/coucher de soleil avec un PWM réglable (durée et valeur min/max).  
 LordPwmTimer utilise la library **TimeLord** disponible ici: [github.com/probonopd/TimeLord](https://github.com/probonopd/TimeLord)
 
 ## Constantes
