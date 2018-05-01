@@ -4,11 +4,11 @@
 #include <TimeLord.h>
 #include <RTClib.h>
 
-#define LORDTIMER_ON		0
-#define LORDTIMER_OFF		1
-#define LORDTIMER_PWM_TIME	2
-#define LORDTIMER_PWM_MIN	3
-#define LORDTIMER_PWM_MAX	4
+#define LORDTIMER_PWM_TIME	0
+#define LORDTIMER_PWM_MIN	1
+#define LORDTIMER_PWM_MAX	2
+#define LORDTIMER_ON		3
+#define LORDTIMER_OFF		4
 
 class LordPwmTimer
 {

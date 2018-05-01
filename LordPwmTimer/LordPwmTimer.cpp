@@ -84,9 +84,9 @@ void LordPwmTimer::runPwm(unsigned long timeSec)
 	int pwmRange = _data[LORDTIMER_PWM_MAX] - _data[LORDTIMER_PWM_MIN];
 	float nbPerSec = (float)(pwmRange) / _data[LORDTIMER_PWM_TIME];
 	unsigned long startOn = (unsigned long)(_data[LORDTIMER_ON]) *60;
-	unsigned long endOn = ((unsigned long)(_data[LORDTIMER_ON]) *60) + _data[LORDTIMER_PWM_TIME];
-	unsigned long startOff = ((unsigned long)(_data[LORDTIMER_OFF]) *60) - _data[LORDTIMER_PWM_TIME];
-	unsigned long endOff = (unsigned long)(_data[LORDTIMER_OFF]) *60;
+	unsigned long endOn = startOn + _data[LORDTIMER_PWM_TIME];
+	unsigned long startOff = (unsigned long)(_data[LORDTIMER_OFF]) *60;
+	unsigned long endOff = startOff + _data[LORDTIMER_PWM_TIME];
 	
 	if(timeSec < startOn) // off = _data[LORDTIMER_PWM_MIN]
 	{
@@ -96,16 +96,19 @@ void LordPwmTimer::runPwm(unsigned long timeSec)
 			analogWrite(_IO_Pin, _pwm);
 		}
 	}
-	else if((timeSec >= startOn)  && (timeSec < endOn)) // switch on = pwm increment
+	else if((timeSec >= startOn)  && (timeSec <= endOn)) // switch on = pwm increment
 	{
 		float pwmVal = _data[LORDTIMER_PWM_MIN] + (nbPerSec * (timeSec - startOn));
+		int decimal = 100 * (pwmVal - (int)(pwmVal));
+		if(decimal > 50) pwmVal = (int)(pwmVal) + 1;
+		else pwmVal = (int)(pwmVal);
 		if((int)(pwmVal) != _pwm)
 		{
 			_pwm = pwmVal;
 			analogWrite(_IO_Pin, _pwm);
 		}
 	}
-	else if((timeSec >= endOn)    && (timeSec < startOff)) // on = _data[LORDTIMER_PWM_MAX]
+	else if((timeSec > endOn)    && (timeSec < startOff)) // on = _data[LORDTIMER_PWM_MAX]
 	{
 		if(_pwm != _data[LORDTIMER_PWM_MAX])
 		{
@@ -113,9 +116,12 @@ void LordPwmTimer::runPwm(unsigned long timeSec)
 			analogWrite(_IO_Pin, _pwm);
 		}
 	}
-	else if((timeSec >= startOff) && (timeSec < endOff)) // switch off = pwm decrement
+	else if((timeSec >= startOff) && (timeSec <= endOff)) // switch off = pwm decrement
 	{
 		float pwmVal = _data[LORDTIMER_PWM_MAX] - (nbPerSec * (timeSec - startOff));
+		int decimal = 100 * (pwmVal - (int)(pwmVal));
+		if(decimal > 50) pwmVal = (int)(pwmVal) + 1;
+		else pwmVal = (int)(pwmVal);
 		if((int)(pwmVal) != _pwm)
 		{
 			_pwm = pwmVal;
