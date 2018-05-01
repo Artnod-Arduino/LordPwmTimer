@@ -70,7 +70,7 @@ Lance l'analyse.
 
 Paramètres	  | Type | Requis | Description
 ------------- | ---- | ------ | -----------
-currentTime	  | DateTime  | Oui	  | Heure actuelle.
+now	  | DateTime  | Oui	  | Heure actuelle.
 
 
 -------------
